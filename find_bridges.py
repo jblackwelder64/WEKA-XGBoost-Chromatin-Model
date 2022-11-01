@@ -27,16 +27,27 @@ def import_data(proj_directory_str):
 def get_X_for_img(feature_stack):
     X_img = []
     
+    print('feature stack shape: ',feature_stack.shape)
     for i in range(2048):
         for j in range(2048):
 
             result = []
-            for layer in feature_stack:
-                result.append(layer[i,j])     
+            for layer in feature_stack[i][j]:
+                result.append(layer)     
             
             X_img.append(result)
             
     return np.array(X_img)
+
+def normalize_image(img):
+    img_copy = img.copy()
+    for i in range(len(img)):
+        for j in range(len(img[0])):
+    #         print(img[i][j])
+    #         print(img[i][j]/65)
+            img_copy[i][j] = img[i][j]/65535
+    return img_copy
+
 
 
 def generate_prediction(feature_stack, bst, threshold=.65):
@@ -47,14 +58,23 @@ def generate_prediction(feature_stack, bst, threshold=.65):
     
     return [0 if val<threshold else 1 for val in pred]
 
-def generate_stats(prediction):
+def generate_stats(feature_stack, prediction):
+    """
+    -Percentage of the entire image that is considered to be a chromosome bridge
+    -Ratio of chromosome bridge pixels to nuclei pixels
+    -Number of connected components
+    -Ratio of # chromosome bridge connected components to # of nuclei
+    """
     pass
 
 
 if __name__ == '__main__':
+
+    import skimage
+
     # results = []
     # imgs, filenames = import_data('./Projections')
-    img_stacks, stack_filenames = import_data('./Feature Stacks/')
+    imgs, img_filenames = import_data('./Projections/')
     """
     for each image:
         generate predictions
@@ -88,21 +108,32 @@ if __name__ == '__main__':
     """
 
     bst = xgb.Booster()
-    bst.load_model('./Models/model3.json')
+    bst.load_model('./Models/model5.json')
+
+    print('model loaded')
+
+    """
+    The main script
+    """
 
     
-    for i in range(len(img_stacks)):
+    for i in range(len(imgs)):
         # img = imgs[i]
         # img_filename = filenames[i]
-        stack_filename = stack_filenames[i]
-        img_stack = img_stacks[i]
-        prediction = generate_prediction(img_stack, bst)
+        img_filename = img_filenames[i]
+        img = normalize_image(imgs[i])
+        print('making feature stack ',i)
+        print(type(img[0]))
+        print(img[0].shape)
+        feature_stack = skimage.feature.multiscale_basic_features(img[0])
+        print('made feature stack ',i)
+        prediction = generate_prediction(feature_stack, bst)
         # results.append(prediction)
 
         # tifffile.imwrite('./Predictions/'+stack_filename+'_PRED.tif',\
         #                     np.reshape(np.array(prediction), (2048, 2048)), photometric='minisblack')
 
-        plt.imsave('./Predictions/'+stack_filename+'_PRED.png',\
+        plt.imsave('./Predictions/'+img_filename+'_PRED.png',\
                            np.reshape(np.array(prediction), (2048, 2048)))
 
         
