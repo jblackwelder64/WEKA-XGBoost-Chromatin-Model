@@ -26,3 +26,7 @@ python find_bridges.py
 ```
 
 Model outputs will be contained in a folder called 'Predictions'.
+
+## Sample Output
+
+![Screenshot](Predictions/Plate_ePB_v1_bulk_20220704_WellB4_ChannelDAPI,DsRed,Cy5_Seq0007 - Denoised.nd2fov_1.tif_PRED.png)
