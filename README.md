@@ -4,7 +4,7 @@ This model is intended to find instances of chromatin bridges (see https://en.wi
 
 ## Installation
 
-Detailed instructions tbd. For now, clone the repository and install all packages that are used.
+Clone the repository and install all packages that are used in a conda environment.
 
 ## Usage
 
