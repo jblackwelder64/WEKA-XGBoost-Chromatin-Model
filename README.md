@@ -17,7 +17,7 @@ Then, use the cd command within the command line to get to the project folder, i
 
 Ensure that all ND2 files containing the images to be segmented are in a directory immediately within the project folder. Now generate the projections:
 ```bash
-python generate_projections.py './the-nd2-files-folder-name/'
+python generate_projections.py [the-nd2-files-folder-name]
 ```
 
 Finally, run the model:
@@ -25,4 +25,4 @@ Finally, run the model:
 python find_bridges.py
 ```
 
-Model outputs will be contained in a folder called 'Results'.
+Model outputs will be contained in a folder called 'Predictions'.

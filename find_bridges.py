@@ -4,6 +4,8 @@ from cellpose.io import imread
 import xgboost as xgb
 import tifffile
 import matplotlib.pyplot as plt
+import cellpose.models
+import csv
 
 
 def import_data(proj_directory_str):
@@ -58,14 +60,42 @@ def generate_prediction(feature_stack, bst, threshold=.65):
     
     return [0 if val<threshold else 1 for val in pred]
 
-def generate_stats(feature_stack, prediction):
+def get_chromatin_pixel_count(prediction):
+    # print(prediction.count(1))
+    return prediction.count(1)
+
+def get_nucleus_pixel_count(cp_model, feature_stack):
+    pred2 = cp_model.eval(np.moveaxis(np.array(feature_stack), 2, 0)[0])
+    return len([pixel_val for pixel_val in list(pred2[0].flatten()) if pixel_val>0])
+
+
+
+
+def generate_stats(feature_stack, prediction, img_filename, cp_model):
     """
     -Percentage of the entire image that is considered to be a chromosome bridge
     -Ratio of chromosome bridge pixels to nuclei pixels
     -Number of connected components
     -Ratio of # chromosome bridge connected components to # of nuclei
     """
-    pass
+
+    # cp_model = cellpose.models.CellposeModel(model_type='nuclei')
+    chromatin_pixel_count = get_chromatin_pixel_count(prediction)
+    nucleus_pixel_count = get_nucleus_pixel_count(cp_model, feature_stack)
+
+    chromatin_nucleus_ratio = chromatin_pixel_count/nucleus_pixel_count
+
+
+
+    # used https://www.codingem.com/python-write-to-csv-file/
+    file = open('./Predictions/'+img_filename+'.csv', 'w')
+    writer = csv.writer(file)
+    data = [chromatin_pixel_count, nucleus_pixel_count, chromatin_nucleus_ratio]
+    writer.writerow(data)
+    file.close()
+
+    
+
 
 
 if __name__ == '__main__':
@@ -118,23 +148,31 @@ if __name__ == '__main__':
 
     
     for i in range(len(imgs)):
-        # img = imgs[i]
-        # img_filename = filenames[i]
         img_filename = img_filenames[i]
         img = normalize_image(imgs[i])
         print('making feature stack ',i)
-        print(type(img[0]))
-        print(img[0].shape)
+        print('image shape: ',img[0].shape)
         feature_stack = skimage.feature.multiscale_basic_features(img[0])
-        print('made feature stack ',i)
-        prediction = generate_prediction(feature_stack, bst)
-        # results.append(prediction)
+        print('finished making feature stack ',i)
 
-        # tifffile.imwrite('./Predictions/'+stack_filename+'_PRED.tif',\
-        #                     np.reshape(np.array(prediction), (2048, 2048)), photometric='minisblack')
+        print('generating prediction',i)
+        prediction = generate_prediction(feature_stack, bst)
+        print('finished generating prediction',i)
+
+        print('generating output',i)
+        cp_model = cellpose.models.CellposeModel(model_type='nuclei')
+        generate_stats(feature_stack, prediction, img_filename, cp_model)
+
+        superimposed = skimage.color.label2rgb(
+            label=np.reshape(np.array(prediction), (2048, 2048)), 
+            image=img[0], 
+            image_alpha=.65, 
+            colors=[(1,1,1)])
+
 
         plt.imsave('./Predictions/'+img_filename+'_PRED.png',\
-                           np.reshape(np.array(prediction), (2048, 2048)))
+                           superimposed)
+        print('finished generating output',i)
 
         
 
