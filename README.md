@@ -1,10 +1,10 @@
 # WEKA-XGBoost-Chromatin-Model
 
-This model is intended to find instances of chromatin bridges in a fluorescence microscopy image (in particular the DAPI channel) and then output the predicted masks and some statistics to indicate the frequency and density with which chromatin bridges occur.
+This model is intended to find instances of chromatin bridges (see https://en.wikipedia.org/wiki/Chromatin_bridge for reference) in a DAPI-stained fluorescence microscopy image and then output the predicted masks as well as some statistics to indicate the frequency and density with which chromatin bridges occur.
 
 ## Installation
 
-Detailed instructions tbd. For now, clone the repository and install all packages that are used.
+Clone the repository and install all packages that are used in a conda environment.
 
 ## Usage
 
