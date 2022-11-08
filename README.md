@@ -2,6 +2,8 @@
 
 This model is intended to find instances of chromatin bridges (see https://en.wikipedia.org/wiki/Chromatin_bridge for reference) in a DAPI-stained fluorescence microscopy image and then output the predicted masks as well as some statistics to indicate the frequency and density with which chromatin bridges occur.
 
+For each image, skimage.feature.multiscale_basic_features is used to generate a 24 deep feature stack. For each location in the image, an XGBoost model uses the corresponding 24 dimensional feature vector to output the probability of that pixel belonging to a chromatin bridge. All pixels with probability higher than some threshold value (for now .65) are said to be part of a chromatin bridge. Finally, DBSCAN is used to cluster these pixels into chromatin bridge instances and remove noise.  
+
 ## Installation
 
 Clone the repository and install all packages that are used in a conda environment.
