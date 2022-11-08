@@ -39,7 +39,7 @@ DBSCAN is used to identify chromatin bridge instances and remove noise.
 
 <img src="Predictions/Plate_ePB_v1_bulk_20220704_WellB4_ChannelDAPI,DsRed,Cy5_Seq0007 - Denoised.nd2fov_1.tif_PRED_INSTANCE_MASK.png">
 
-Various statistics are outputted in order to help quantify the distribution of chromatin bridges in each image.
+Various statistics are outputted to a .csv file in order to help quantify the distribution of chromatin bridges in each image.
 
 <img src="/Sample Statistics Output.png">
 
