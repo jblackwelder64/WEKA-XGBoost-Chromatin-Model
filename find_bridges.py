@@ -41,6 +41,7 @@ def get_X_for_img(feature_stack):
             
     return np.array(X_img)
 
+
 def normalize_image(img):
     img_copy = img.copy()
     for i in range(len(img)):
@@ -49,7 +50,6 @@ def normalize_image(img):
     #         print(img[i][j]/65)
             img_copy[i][j] = img[i][j]/65535
     return img_copy
-
 
 
 def generate_prediction(feature_stack, bst, threshold=.65):
@@ -66,7 +66,57 @@ def get_chromatin_pixel_count(prediction):
 
 def get_nucleus_pixel_count(cp_model, feature_stack):
     pred2 = cp_model.eval(np.moveaxis(np.array(feature_stack), 2, 0)[0])
-    return len([pixel_val for pixel_val in list(pred2[0].flatten()) if pixel_val>0])
+
+    nucleus_pixel_count = len([pixel_val for pixel_val in list(pred2[0].flatten()) if pixel_val>0])
+    total_nuclei_count = len(np.unique(pred2[0].flatten())) - 1
+    
+    return nucleus_pixel_count, total_nuclei_count
+
+
+def get_bridge_count(prediction, img_filename):
+    """
+    Using the DBSCAN clustering algorithm to 
+        i. estimate the total number of Chromatin Bridges
+        ii. provide a more conservative estimate for total total number of pixels in a Chromatin Bridge 
+    """
+    from sklearn.cluster import DBSCAN
+
+
+    img = np.reshape(np.array(prediction), (2048, 2048))
+    img_array = np.array(img)
+    # print(np.unique(img_array))
+    X = []
+    for i in range(len(img_array)):
+        for j in range(len(img_array[0])):
+            if img_array[i,j] >0:
+                X.append(np.array([i,j]))        
+    
+
+    DBSCAN_cluster = DBSCAN(metric='euclidean', eps=30, min_samples=20).fit(X)
+    DBSCAN_labels = DBSCAN_cluster.labels_
+    
+    total_bridge_count = len(np.unique(DBSCAN_labels))-1
+    conservative_chromatin_pixel_count = len([label for label in DBSCAN_labels if not label==-1])
+
+    # y_coords = [2048-X[i][0] for i in range(len(X)) if not DBSCAN_labels[i]==-1]
+    # x_coords = [X[i][1] for i in range(len(X)) if not DBSCAN_labels[i]==-1]
+    # plt.scatter(
+    # x_coords,y_coords,s=.5,c=[label for label in DBSCAN_labels if not label==-1],
+    # cmap='hsv')    
+    # plt.savefig('./Predictions/'+img_filename+'_PRED_INSTANCE_MASK.png')
+
+    pred_processed = np.zeros((len(img_array), len(img_array[0])))
+    for i in range(len(X)):
+        r = X[i][0]
+        c = X[i][1]
+        label = DBSCAN_labels[i]
+        if label>0:
+            pred_processed[r,c] = label
+
+    plt.imsave('./Predictions/'+img_filename+'_PRED_INSTANCE_MASK.png', pred_processed)
+
+    return total_bridge_count, conservative_chromatin_pixel_count
+
 
 
 
@@ -81,21 +131,33 @@ def generate_stats(feature_stack, prediction, img_filename, cp_model):
 
     # cp_model = cellpose.models.CellposeModel(model_type='nuclei')
     chromatin_pixel_count = get_chromatin_pixel_count(prediction)
-    nucleus_pixel_count = get_nucleus_pixel_count(cp_model, feature_stack)
+    nucleus_pixel_count, total_nuclei_count = get_nucleus_pixel_count(cp_model, feature_stack)
 
-    chromatin_nucleus_ratio = chromatin_pixel_count/nucleus_pixel_count
+    chromatin_nucleus_pixel_ratio = chromatin_pixel_count/nucleus_pixel_count
+
+    total_bridge_count, conservative_chromatin_pixel_count = get_bridge_count(prediction, img_filename)
+
+    conservative_chromatin_nucleus_pixel_ratio = conservative_chromatin_pixel_count/nucleus_pixel_count
+    chromatin_nucleus_instance_ratio = total_bridge_count/total_nuclei_count
 
 
+    # Used https://www.codingem.com/python-write-to-csv-file/
 
-    # used https://www.codingem.com/python-write-to-csv-file/
-    file = open('./Predictions/'+img_filename+'.csv', 'w')
-    writer = csv.writer(file)
-    data = [chromatin_pixel_count, nucleus_pixel_count, chromatin_nucleus_ratio]
-    writer.writerow(data)
-    file.close()
+    data = [chromatin_pixel_count, nucleus_pixel_count, chromatin_nucleus_pixel_ratio, conservative_chromatin_pixel_count, 
+    conservative_chromatin_nucleus_pixel_ratio, total_bridge_count, total_nuclei_count, chromatin_nucleus_instance_ratio]
+
+    with open('./Predictions/'+img_filename+'.csv', 'w') as file:
+        fieldnames = [
+            'Chromatin Pixel Count', 'Nucleus Pixel Count', 'Chromatin Nucleus Pixel Ratio', 
+            'Postprocessed Chromatin Pixel Count', 'Postprocessed Chromatin Nucleus Pixel Ratio', 
+            'Total Bridge Count', 'Total Nucleus Count', 'Chromatin Nucleus Instance Ratio'
+            ]
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerow(dict(zip(fieldnames, data)))
+       
 
     
-
 
 
 if __name__ == '__main__':
@@ -142,11 +204,11 @@ if __name__ == '__main__':
 
     print('model loaded')
 
+    
     """
     The main script
     """
 
-    
     for i in range(len(imgs)):
         img_filename = img_filenames[i]
         img = normalize_image(imgs[i])
