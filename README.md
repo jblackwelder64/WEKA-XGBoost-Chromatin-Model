@@ -33,11 +33,11 @@ Model outputs will be contained in a folder called 'Predictions'.
 
 Below is the model's segmentation results superimposed over the original sample image before post-processing.
 
-<img src="Predictions/Plate_ePB_v1_bulk_20220704_WellB4_ChannelDAPI,DsRed,Cy5_Seq0007 - Denoised.nd2fov_1.tif_PRED.png">
+<img src="Sample Predictions/Plate_ePB_v1_bulk_20220704_WellB4_ChannelDAPI,DsRed,Cy5_Seq0007 - Denoised.nd2fov_1.tif_PRED.png">
 
 DBSCAN is used to identify chromatin bridge instances and remove noise.
 
-<img src="Predictions/Plate_ePB_v1_bulk_20220704_WellB4_ChannelDAPI,DsRed,Cy5_Seq0007 - Denoised.nd2fov_1.tif_PRED_INSTANCE_MASK.png">
+<img src="Sample Predictions/Plate_ePB_v1_bulk_20220704_WellB4_ChannelDAPI,DsRed,Cy5_Seq0007 - Denoised.nd2fov_1.tif_PRED_INSTANCE_MASK.png">
 
 Various statistics are outputted to a .csv file in order to help quantify the distribution of chromatin bridges in each image.
 
